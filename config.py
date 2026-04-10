@@ -47,10 +47,17 @@ def _read_first_env(*names: str, default: str = "") -> str:
     return default
 
 
+def _has_external_db_config() -> bool:
+    required = ("DB_HOST", "DB_NAME", "DB_USER")
+    return all(_read_env(name) for name in required)
+
+
 def _default_database_url(is_vercel: bool) -> str:
     explicit_url = _read_env("DATABASE_URL")
     if explicit_url:
         return explicit_url
+    if _has_external_db_config():
+        return ""
     if is_vercel:
         temp_root = Path("/tmp")
         if os.name == "nt":
@@ -72,7 +79,7 @@ def get_settings() -> Settings:
     return Settings(
         database_url_override=_default_database_url(is_vercel),
         db_user=_read_env("DB_USER", "root"),
-        db_password=_read_env("DB_PASSWORD", ""),
+        db_password=_read_env("DB_PASSWORD", "root"),
         db_host=_read_env("DB_HOST", "localhost"),
         db_port=_read_env("DB_PORT", "3306"),
         db_name=_read_env("DB_NAME", "sis"),
