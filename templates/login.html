@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Student Login{% endblock %}
+{% block body %}
+<div class="auth-wrap">
+  <div class="card auth-card narrow">
+    <h1 class="title" style="font-size: 1.9rem;">Student Login</h1>
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+    <form method="post" action="/login">
+      <label>Email</label>
+      <input type="email" name="email" required />
+      <label>Password</label>
+      <input type="password" name="password" required />
+      <button class="btn btn-primary btn-block" type="submit">Login</button>
+    </form>
+    <div class="meta-links">New user? <a href="/signup">Create account</a></div>
+    <div class="meta-links">Admin? <a href="/admin/login">Admin Login</a></div>
+  </div>
+</div>
+{% endblock %}

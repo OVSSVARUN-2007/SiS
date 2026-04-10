@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Attendance{% endblock %}
+{% block body %}
+  <div class="topbar">
+    <div>{{ user.full_name }} - Attendance</div>
+    <a href="/dashboard">Back to Dashboard</a>
+  </div>
+
+  <div class="container">
+    <div class="grid-3">
+      <div class="card"><strong>Present:</strong> {{ present_count }}</div>
+      <div class="card"><strong>Absent:</strong> {{ absent_count }}</div>
+      <div class="card"><strong>Attendance %:</strong> {{ percentage }}%</div>
+    </div>
+
+    <table>
+      <tr><th>Date</th><th>Course</th><th>Status</th></tr>
+      {% for row in records %}
+        <tr>
+          <td>{{ row.date or "-" }}</td>
+          <td>{{ row.course.title if row.course else "-" }}</td>
+          <td>
+            {% if row.status == "present" %}
+              <span class="tag-done">Present</span>
+            {% else %}
+              <span class="error" style="display:inline-block; padding:4px 8px;">Absent</span>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      {% if not records %}
+        <tr><td colspan="3">No attendance records found.</td></tr>
+      {% endif %}
+    </table>
+  </div>
+{% endblock %}

@@ -1,0 +1,278 @@
+:root {
+  --bg: #f3f7ff;
+  --bg-alt: #eef3fb;
+  --surface: #ffffff;
+  --border: #dde6f5;
+  --text: #1d2b40;
+  --muted: #5a6f8f;
+  --primary: #1f3a6d;
+  --primary-2: #305ea9;
+  --success: #117a52;
+  --danger: #b12222;
+  --warning: #ad7708;
+  --shadow: 0 12px 30px rgba(18, 39, 77, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, sans-serif;
+  color: var(--text);
+  background: linear-gradient(180deg, var(--bg-alt) 0%, var(--bg) 100%);
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.container {
+  max-width: 1160px;
+  margin: 22px auto;
+  padding: 0 16px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0 0 10px;
+  color: var(--primary);
+  font-size: 2.2rem;
+}
+
+.subtitle {
+  margin: 0 0 18px;
+  color: var(--muted);
+}
+
+.topbar {
+  background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  color: #fff;
+  padding: 14px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar a {
+  color: #fff;
+  margin-left: 12px;
+}
+
+.auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.auth-card {
+  width: min(100%, 560px);
+}
+
+.auth-card.narrow {
+  width: min(100%, 440px);
+}
+
+label {
+  display: block;
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px solid #cad7ea;
+  border-radius: 10px;
+  padding: 10px 11px;
+  font: inherit;
+  color: var(--text);
+  background: #fff;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.btn {
+  display: inline-block;
+  border: 0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-secondary {
+  background: #0d6b4d;
+  color: #fff;
+}
+
+.btn-block {
+  width: 100%;
+  margin-top: 14px;
+}
+
+.error {
+  color: var(--danger);
+  background: #ffe8e8;
+  border: 1px solid #ffc6c6;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.meta-links {
+  margin-top: 12px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.grid-2,
+.grid-3 {
+  display: grid;
+  gap: 12px;
+}
+
+.grid-2 {
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-3 {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 10px;
+  border-bottom: 1px solid #e7eef8;
+  vertical-align: top;
+}
+
+.tag-done {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.tag-pending {
+  color: var(--warning);
+  font-weight: 700;
+}
+
+.pill {
+  background: #f2f6fd;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.ai-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.btn-copy {
+  background: #e8eefb;
+  color: #1d2b40;
+  border: 1px solid #c8d7f2;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.ai-response {
+  display: grid;
+  gap: 10px;
+}
+
+.ai-text {
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.code-card {
+  border: 1px solid #d7e2f7;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f8faff;
+}
+
+.code-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  background: #eef3fd;
+  border-bottom: 1px solid #d7e2f7;
+  font-size: 0.9rem;
+  color: #3f5273;
+}
+
+.code-pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  background: #0f172a;
+  color: #f1f5f9;
+}
+
+.code-pre code {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.hero {
+  max-width: 620px;
+  text-align: center;
+}
+
+.hero .actions {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 900px) {
+  .grid-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .grid-2,
+  .hero .actions {
+    grid-template-columns: 1fr;
+  }
+}

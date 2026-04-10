@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block body %}
+  <div class="topbar">
+    <div>Admin Dashboard - {{ admin_user.full_name }}</div>
+    <div>
+      <a href="/dashboard">Student View</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+  <div class="container">
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Add Course</h2>
+      <form method="post" action="/admin/courses" class="grid-3">
+        <div><label>Title</label><input type="text" name="title" required /></div>
+        <div><label>Instructor</label><input type="text" name="instructor" /></div>
+        <div><label>Description</label><input type="text" name="description" /></div>
+        <div><button class="btn btn-primary" type="submit">Create Course</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Add Assignment</h2>
+      <form method="post" action="/admin/assignments" class="grid-3">
+        <div><label>Title</label><input type="text" name="title" required /></div>
+        <div>
+          <label>Course</label>
+          <select name="course_id">
+            <option value="">-- Optional --</option>
+            {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>Due Date</label><input type="date" name="due_date" /></div>
+        <div><label>Department</label><input type="text" name="department" /></div>
+        <div><label>Year</label><input type="number" min="1" max="6" name="academic_year" /></div>
+        <div><label>Section</label><input type="text" name="section" /></div>
+        <div style="grid-column: 1 / -1;"><label>Description</label><textarea name="description" rows="3"></textarea></div>
+        <div><button class="btn btn-primary" type="submit">Create Assignment</button></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Mark Attendance (Student Wise)</h2>
+      <form method="post" action="/admin/attendance" class="grid-3">
+        <div>
+          <label>Student</label>
+          <select name="student_id" required>
+            <option value="">-- Select Student --</option>
+            {% for s in students %}
+              <option value="{{ s.id }}">{{ s.full_name }} ({{ s.department or "-" }}/{{ s.academic_year or "-" }}/{{ s.section or "-" }})</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Course</label>
+          <select name="course_id">
+            <option value="">-- Optional --</option>
+            {% for c in courses %}
+              <option value="{{ c.id }}">{{ c.title }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div><label>Date</label><input type="date" name="date" required /></div>
+        <div>
+          <label>Status</label>
+          <select name="status" required>
+            <option value="present">Present</option>
+            <option value="absent">Absent</option>
+          </select>
+        </div>
+        <div><button class="btn btn-primary" type="submit">Save Attendance</button></div>
+      </form>
+    </div>
+
+    <div class="card grid-2">
+      <div>
+        <h2 class="title" style="font-size:1.3rem;">Post Notice / Internship / Job News</h2>
+        <form method="post" action="/admin/notices">
+          <label>Category</label>
+          <select name="category">
+            <option value="notice">Notice</option>
+            <option value="internship">Internship</option>
+            <option value="job">Job News</option>
+          </select>
+          <label>Title</label><input type="text" name="title" required />
+          <label>Message</label><textarea name="message" rows="4" required></textarea>
+          <label>Department</label><input type="text" name="department" />
+          <label>Year</label><input type="number" min="1" max="6" name="academic_year" />
+          <label>Section</label><input type="text" name="section" />
+          <button class="btn btn-primary" type="submit">Publish</button>
+        </form>
+      </div>
+      <div>
+        <h2 class="title" style="font-size:1.3rem;">Add Document / Link</h2>
+        <form method="post" action="/admin/documents">
+          <label>Category</label>
+          <select name="category">
+            <option value="document">Document</option>
+            <option value="internship">Internship Link</option>
+            <option value="job">Job Link</option>
+          </select>
+          <label>Title</label><input type="text" name="title" required />
+          <label>URL / File Link</label><input type="text" name="file_url" required />
+          <label>Description</label><textarea name="description" rows="3"></textarea>
+          <label>Department</label><input type="text" name="department" />
+          <label>Year</label><input type="number" min="1" max="6" name="academic_year" />
+          <label>Section</label><input type="text" name="section" />
+          <button class="btn btn-primary" type="submit">Add Document</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">All Students</h2>
+      <form method="get" action="/admin/dashboard" class="grid-3">
+        <div><label>Department</label><input type="text" name="department" value="{{ filters.department }}" /></div>
+        <div><label>Year</label><input type="number" min="1" max="6" name="academic_year" value="{{ filters.academic_year }}" /></div>
+        <div><label>Section</label><input type="text" name="section" value="{{ filters.section }}" /></div>
+        <div><button class="btn btn-primary" type="submit">Filter Students</button></div>
+      </form>
+      <table>
+        <tr><th>ID</th><th>Name</th><th>Email</th><th>Dept</th><th>Year</th><th>Section</th></tr>
+        {% for s in students %}
+          <tr>
+            <td>{{ s.id }}</td>
+            <td>{{ s.full_name }}</td>
+            <td>{{ s.email }}</td>
+            <td>{{ s.department or "-" }}</td>
+            <td>{{ s.academic_year or "-" }}</td>
+            <td>{{ s.section or "-" }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Recent Attendance</h2>
+      <table>
+        <tr><th>Date</th><th>Student</th><th>Course</th><th>Status</th><th>Class</th></tr>
+        {% for a in attendance_rows %}
+          <tr>
+            <td>{{ a.date or "-" }}</td>
+            <td>{{ a.student.full_name if a.student else "-" }}</td>
+            <td>{{ a.course.title if a.course else "-" }}</td>
+            <td>{{ a.status }}</td>
+            <td>{{ a.department or "-" }}/{{ a.academic_year or "-" }}/{{ a.section or "-" }}</td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  </div>
+{% endblock %}

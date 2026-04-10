@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block body %}
+  <div class="topbar">
+    <div>Welcome, {{ user.full_name }} ({{ user.department or "-" }} / Year {{ user.academic_year or "-" }} / {{ user.section or "-" }})</div>
+    <div>
+      <a href="/attendance">Attendance</a>
+      <a href="/logout">Logout</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">My Enrollments</h2>
+      {% if enrollments %}
+        <table>
+          <tr><th>Course</th><th>Instructor</th><th>Enrolled At</th></tr>
+          {% for enrollment in enrollments %}
+            <tr>
+              <td>{{ enrollment.course.title if enrollment.course else "-" }}</td>
+              <td>{{ enrollment.course.instructor if enrollment.course else "-" }}</td>
+              <td>{{ enrollment.enrolled_at }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p>No enrollments yet.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Assignments</h2>
+      {% if assignments %}
+        <table>
+          <tr><th>Title</th><th>Due Date</th><th>Status</th></tr>
+          {% for assignment in assignments %}
+            <tr>
+              <td>{{ assignment.title }}</td>
+              <td>{{ assignment.due_date or "-" }}</td>
+              <td>
+                {% if assignment.id in submitted_assignment_ids %}
+                  <span class="tag-done">Submitted</span>
+                {% else %}
+                  <span class="tag-pending">Pending</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p>No assignments found.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">AI Learning Assistant</h2>
+      <form method="post" action="/ai/ask">
+        <label>Ask your question</label>
+        <textarea rows="4" name="question" placeholder="Explain recursion with an easy example..." required></textarea>
+        <button class="btn btn-primary" type="submit">Ask AI</button>
+      </form>
+      {% if ai_response %}
+        <h3>Question</h3>
+        <div class="pill">{{ ai_question }}</div>
+        <h3>Response</h3>
+        <div class="ai-toolbar">
+          <button class="btn-copy" type="button" id="copy-full-response">Copy Full Response</button>
+        </div>
+        <div id="ai-rendered-response" class="ai-response"></div>
+        <pre id="ai-raw-response" style="display:none;">{{ ai_response }}</pre>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Notices / Internship / Job News</h2>
+      {% if notices %}
+        <table>
+          <tr><th>Type</th><th>Title</th><th>Message</th><th>Date</th></tr>
+          {% for n in notices %}
+            <tr>
+              <td>{{ n.category }}</td>
+              <td>{{ n.title }}</td>
+              <td>{{ n.message }}</td>
+              <td>{{ n.created_at }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p>No updates available.</p>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2 class="title" style="font-size:1.3rem;">Documents</h2>
+      {% if documents %}
+        <table>
+          <tr><th>Type</th><th>Title</th><th>Description</th><th>Link</th></tr>
+          {% for d in documents %}
+            <tr>
+              <td>{{ d.category }}</td>
+              <td>{{ d.title }}</td>
+              <td>{{ d.description or "-" }}</td>
+              <td><a href="{{ d.file_url }}" target="_blank">Open</a></td>
+            </tr>
+          {% endfor %}
+        </table>
+      {% else %}
+        <p>No documents available.</p>
+      {% endif %}
+    </div>
+  </div>
+  {% if ai_response %}
+  <script>
+    (function () {
+      const rawEl = document.getElementById("ai-raw-response");
+      const outEl = document.getElementById("ai-rendered-response");
+      const copyAllBtn = document.getElementById("copy-full-response");
+      if (!rawEl || !outEl) return;
+
+      const raw = rawEl.textContent || "";
+      if (copyAllBtn) {
+        copyAllBtn.addEventListener("click", async function () {
+          await navigator.clipboard.writeText(raw);
+          copyAllBtn.textContent = "Copied";
+          setTimeout(() => { copyAllBtn.textContent = "Copy Full Response"; }, 1200);
+        });
+      }
+
+      const blocks = [];
+      const regex = /```([\w#+.-]*)?\n([\s\S]*?)```/g;
+      let last = 0;
+      let m;
+      while ((m = regex.exec(raw)) !== null) {
+        if (m.index > last) {
+          blocks.push({ type: "text", value: raw.slice(last, m.index).trim() });
+        }
+        blocks.push({ type: "code", lang: (m[1] || "code").trim(), value: m[2].trimEnd() });
+        last = regex.lastIndex;
+      }
+      if (last < raw.length) {
+        blocks.push({ type: "text", value: raw.slice(last).trim() });
+      }
+      if (!blocks.length) {
+        blocks.push({ type: "text", value: raw });
+      }
+
+      let codeIndex = 0;
+      for (const block of blocks) {
+        if (!block.value) continue;
+        if (block.type === "text") {
+          const div = document.createElement("div");
+          div.className = "pill ai-text";
+          div.textContent = block.value;
+          outEl.appendChild(div);
+          continue;
+        }
+
+        const card = document.createElement("div");
+        card.className = "code-card";
+
+        const head = document.createElement("div");
+        head.className = "code-head";
+
+        const lang = document.createElement("span");
+        lang.textContent = block.lang || "code";
+
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn-copy";
+        btn.textContent = "Copy";
+        const codeId = "ai-code-" + codeIndex++;
+        btn.addEventListener("click", async function () {
+          const codeNode = document.getElementById(codeId);
+          await navigator.clipboard.writeText(codeNode ? codeNode.textContent : "");
+          btn.textContent = "Copied";
+          setTimeout(() => { btn.textContent = "Copy"; }, 1200);
+        });
+
+        head.appendChild(lang);
+        head.appendChild(btn);
+
+        const pre = document.createElement("pre");
+        pre.className = "code-pre";
+        const code = document.createElement("code");
+        code.id = codeId;
+        code.textContent = block.value;
+        pre.appendChild(code);
+
+        card.appendChild(head);
+        card.appendChild(pre);
+        outEl.appendChild(card);
+      }
+    })();
+  </script>
+  {% endif %}
+{% endblock %}
