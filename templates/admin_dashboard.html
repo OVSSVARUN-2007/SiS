@@ -2,8 +2,8 @@
 {% block title %}Admin Dashboard{% endblock %}
 {% block body %}
   <div class="topbar">
-    <div>Admin Dashboard - {{ admin_user.full_name }}</div>
-    <div>
+    <div class="topbar-title">Admin Dashboard - {{ admin_user.full_name }}</div>
+    <div class="topbar-actions">
       <a href="/dashboard">Student View</a>
       <a href="/logout">Logout</a>
     </div>
@@ -14,7 +14,7 @@
     {% endif %}
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Add Course</h2>
+      <h2 class="section-title">Add Course</h2>
       <form method="post" action="/admin/courses" class="grid-3">
         <div><label>Title</label><input type="text" name="title" required /></div>
         <div><label>Instructor</label><input type="text" name="instructor" /></div>
@@ -24,7 +24,7 @@
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Add Assignment</h2>
+      <h2 class="section-title">Add Assignment</h2>
       <form method="post" action="/admin/assignments" class="grid-3">
         <div><label>Title</label><input type="text" name="title" required /></div>
         <div>
@@ -46,7 +46,7 @@
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Mark Attendance (Student Wise)</h2>
+      <h2 class="section-title">Mark Attendance (Student Wise)</h2>
       <form method="post" action="/admin/attendance" class="grid-3">
         <div>
           <label>Student</label>
@@ -80,7 +80,7 @@
 
     <div class="card grid-2">
       <div>
-        <h2 class="title" style="font-size:1.3rem;">Post Notice / Internship / Job News</h2>
+        <h2 class="section-title">Post Notice / Internship / Job News</h2>
         <form method="post" action="/admin/notices">
           <label>Category</label>
           <select name="category">
@@ -97,7 +97,7 @@
         </form>
       </div>
       <div>
-        <h2 class="title" style="font-size:1.3rem;">Add Document / Link</h2>
+        <h2 class="section-title">Add Document / Link</h2>
         <form method="post" action="/admin/documents">
           <label>Category</label>
           <select name="category">
@@ -117,42 +117,46 @@
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">All Students</h2>
+      <h2 class="section-title">All Students</h2>
       <form method="get" action="/admin/dashboard" class="grid-3">
         <div><label>Department</label><input type="text" name="department" value="{{ filters.department }}" /></div>
         <div><label>Year</label><input type="number" min="1" max="6" name="academic_year" value="{{ filters.academic_year }}" /></div>
         <div><label>Section</label><input type="text" name="section" value="{{ filters.section }}" /></div>
         <div><button class="btn btn-primary" type="submit">Filter Students</button></div>
       </form>
-      <table>
-        <tr><th>ID</th><th>Name</th><th>Email</th><th>Dept</th><th>Year</th><th>Section</th></tr>
-        {% for s in students %}
-          <tr>
-            <td>{{ s.id }}</td>
-            <td>{{ s.full_name }}</td>
-            <td>{{ s.email }}</td>
-            <td>{{ s.department or "-" }}</td>
-            <td>{{ s.academic_year or "-" }}</td>
-            <td>{{ s.section or "-" }}</td>
-          </tr>
-        {% endfor %}
-      </table>
+      <div class="table-wrap">
+        <table>
+          <tr><th>ID</th><th>Name</th><th>Email</th><th>Dept</th><th>Year</th><th>Section</th></tr>
+          {% for s in students %}
+            <tr>
+              <td>{{ s.id }}</td>
+              <td>{{ s.full_name }}</td>
+              <td>{{ s.email }}</td>
+              <td>{{ s.department or "-" }}</td>
+              <td>{{ s.academic_year or "-" }}</td>
+              <td>{{ s.section or "-" }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Recent Attendance</h2>
-      <table>
-        <tr><th>Date</th><th>Student</th><th>Course</th><th>Status</th><th>Class</th></tr>
-        {% for a in attendance_rows %}
-          <tr>
-            <td>{{ a.date or "-" }}</td>
-            <td>{{ a.student.full_name if a.student else "-" }}</td>
-            <td>{{ a.course.title if a.course else "-" }}</td>
-            <td>{{ a.status }}</td>
-            <td>{{ a.department or "-" }}/{{ a.academic_year or "-" }}/{{ a.section or "-" }}</td>
-          </tr>
-        {% endfor %}
-      </table>
+      <h2 class="section-title">Recent Attendance</h2>
+      <div class="table-wrap">
+        <table>
+          <tr><th>Date</th><th>Student</th><th>Course</th><th>Status</th><th>Class</th></tr>
+          {% for a in attendance_rows %}
+            <tr>
+              <td>{{ a.date or "-" }}</td>
+              <td>{{ a.student.full_name if a.student else "-" }}</td>
+              <td>{{ a.course.title if a.course else "-" }}</td>
+              <td>{{ a.status }}</td>
+              <td>{{ a.department or "-" }}/{{ a.academic_year or "-" }}/{{ a.section or "-" }}</td>
+            </tr>
+          {% endfor %}
+        </table>
+      </div>
     </div>
   </div>
 {% endblock %}

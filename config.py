@@ -1,5 +1,7 @@
 import os
+import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 from urllib.parse import quote_plus
 
 from dotenv import load_dotenv
@@ -9,6 +11,7 @@ load_dotenv()
 
 @dataclass(frozen=True)
 class Settings:
+    database_url_override: str
     db_user: str
     db_password: str
     db_host: str
@@ -23,6 +26,8 @@ class Settings:
 
     @property
     def database_url(self) -> str:
+        if self.database_url_override:
+            return self.database_url_override
         escaped_password = quote_plus(self.db_password)
         return (
             f"mysql+pymysql://{self.db_user}:{escaped_password}"
@@ -34,9 +39,21 @@ def _read_env(name: str, default: str = "") -> str:
     return (os.getenv(name, default) or "").strip()
 
 
+def _default_database_url(is_vercel: bool) -> str:
+    explicit_url = _read_env("DATABASE_URL")
+    if explicit_url:
+        return explicit_url
+    if is_vercel:
+        temp_root = Path("/tmp")
+        if os.name == "nt":
+            temp_root = Path(tempfile.gettempdir())
+        return f"sqlite:///{(temp_root / 'sis.db').resolve().as_posix()}"
+    return ""
+
+
 def get_settings() -> Settings:
     is_vercel = _read_env("VERCEL", "") == "1"
-    auto_migrate_default = "false" if is_vercel else "true"
+    auto_migrate_default = "true"
     enable_startup_schema_sync = _read_env("ENABLE_STARTUP_SCHEMA_SYNC", auto_migrate_default).lower() in {
         "1",
         "true",
@@ -45,6 +62,7 @@ def get_settings() -> Settings:
     }
 
     return Settings(
+        database_url_override=_default_database_url(is_vercel),
         db_user=_read_env("DB_USER", "root"),
         db_password=_read_env("DB_PASSWORD", ""),
         db_host=_read_env("DB_HOST", "localhost"),

@@ -20,14 +20,34 @@ FALLBACK_MODELS = [
 headers = {"Authorization": f"Bearer {HF_API_KEY}"} if HF_API_KEY else {}
 
 
+def _normalize_error_message(error_text: str, status_code: int | None = None) -> str:
+    lowered = (error_text or "").lower()
+
+    if status_code in {401, 403} or "expired" in lowered or "access token" in lowered or "unauthorized" in lowered:
+        return (
+            "Your Hugging Face API token is invalid or expired. "
+            "Update HF_API_KEY in .env with a new token from your Hugging Face account."
+        )
+
+    if "model" in lowered and ("not found" in lowered or "enabled" in lowered or "does not exist" in lowered):
+        return (
+            "The selected Hugging Face model is not available for this token. "
+            "Set HF_MODEL_ID in .env to a model enabled in your Hugging Face account."
+        )
+
+    return error_text or "Unknown AI service error."
+
+
 def _extract_error(response):
     try:
         data = response.json()
     except ValueError:
-        return f"AI service error ({response.status_code}): {response.text[:200]}", None
+        raw_error = f"AI service error ({response.status_code}): {response.text[:200]}"
+        return _normalize_error_message(raw_error, response.status_code), None
     if isinstance(data, dict):
-        return data.get("error", f"AI service error ({response.status_code})."), data
-    return f"AI service error ({response.status_code}).", data
+        raw_error = data.get("error", f"AI service error ({response.status_code}).")
+        return _normalize_error_message(raw_error, response.status_code), data
+    return _normalize_error_message(f"AI service error ({response.status_code}).", response.status_code), data
 
 
 def _parse_inference_response(data):
@@ -79,5 +99,10 @@ def ask_ai(question: str):
             return output
         if error:
             last_error = error
+            if "token is invalid or expired" in error.lower():
+                return error
 
-    return f"{last_error} Please set HF_MODEL_ID in .env to a model enabled in your HF account."
+    if "model is not available" in last_error.lower():
+        return last_error
+
+    return last_error

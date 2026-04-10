@@ -2,129 +2,255 @@
 {% block title %}Student Dashboard{% endblock %}
 {% block body %}
   <div class="topbar">
-    <div>Welcome, {{ user.full_name }} ({{ user.department or "-" }} / Year {{ user.academic_year or "-" }} / {{ user.section or "-" }})</div>
-    <div>
+    <div class="topbar-title">Welcome, {{ user.full_name }} ({{ user.department or "-" }} / Year {{ user.academic_year or "-" }} / {{ user.section or "-" }})</div>
+    <div class="topbar-actions">
       <a href="/attendance">Attendance</a>
       <a href="/logout">Logout</a>
     </div>
   </div>
 
   <div class="container">
+    <div class="stack-lg">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <strong>{{ enrollments|length }}</strong>
+        <span>Enrolled courses</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ assignments|length }}</strong>
+        <span>Visible assignments</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ notices|length }}</strong>
+        <span>Latest updates</span>
+      </div>
+    </div>
+
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">My Enrollments</h2>
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">My Enrollments</h2>
+          <p>Keep track of the courses currently linked to your profile.</p>
+        </div>
+      </div>
       {% if enrollments %}
-        <table>
-          <tr><th>Course</th><th>Instructor</th><th>Enrolled At</th></tr>
-          {% for enrollment in enrollments %}
-            <tr>
-              <td>{{ enrollment.course.title if enrollment.course else "-" }}</td>
-              <td>{{ enrollment.course.instructor if enrollment.course else "-" }}</td>
-              <td>{{ enrollment.enrolled_at }}</td>
-            </tr>
-          {% endfor %}
-        </table>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Course</th><th>Instructor</th><th>Enrolled At</th></tr>
+            {% for enrollment in enrollments %}
+              <tr>
+                <td>{{ enrollment.course.title if enrollment.course else "-" }}</td>
+                <td>{{ enrollment.course.instructor if enrollment.course else "-" }}</td>
+                <td>{{ enrollment.enrolled_at }}</td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
       {% else %}
-        <p>No enrollments yet.</p>
+        <div class="empty-state">No enrollments yet. Once courses are assigned, they will appear here.</div>
       {% endif %}
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Assignments</h2>
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">Assignments</h2>
+          <p>Review due work, submit answers, and monitor completion status.</p>
+        </div>
+      </div>
       {% if assignments %}
-        <table>
-          <tr><th>Title</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
-          {% for assignment in assignments %}
-            <tr>
-              <td>{{ assignment.title }}</td>
-              <td>{{ assignment.due_date or "-" }}</td>
-              <td>
-                {% if assignment.id in submitted_assignment_ids %}
-                  <span class="tag-done">Submitted</span>
-                {% else %}
-                  <span class="tag-pending">Pending</span>
-                {% endif %}
-              </td>
-              <td>
-                {% if assignment.id in submitted_assignment_ids %}
-                  <span class="tag-done">Submitted</span>
-                {% else %}
-                  <form method="post" action="/assignments/{{ assignment.id }}/submit">
-                    <textarea name="content" rows="2" placeholder="Add your answer/notes (optional)"></textarea>
-                    <button class="btn btn-primary" type="submit">Submit</button>
-                  </form>
-                {% endif %}
-              </td>
-            </tr>
-          {% endfor %}
-        </table>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Title</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
+            {% for assignment in assignments %}
+              <tr>
+                <td>{{ assignment.title }}</td>
+                <td>{{ assignment.due_date or "-" }}</td>
+                <td>
+                  {% if assignment.id in submitted_assignment_ids %}
+                    <span class="tag-done">Submitted</span>
+                  {% else %}
+                    <span class="tag-pending">Pending</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if assignment.id in submitted_assignment_ids %}
+                    <span class="tag-done">Submitted</span>
+                  {% else %}
+                    <form method="post" action="/assignments/{{ assignment.id }}/submit">
+                      <textarea name="content" rows="2" placeholder="Add your answer/notes (optional)"></textarea>
+                      <button class="btn btn-primary" type="submit">Submit</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
       {% else %}
-        <p>No assignments found.</p>
+        <div class="empty-state">No assignments found right now. Check back later for new coursework.</div>
       {% endif %}
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">AI Learning Assistant</h2>
-      <form method="post" action="/ai/ask">
-        <label>Ask your question</label>
-        <textarea rows="4" name="question" placeholder="Explain recursion with an easy example..." required></textarea>
-        <button class="btn btn-primary" type="submit">Ask AI</button>
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">AI Learning Assistant</h2>
+          <p>Ask for explanations, step-by-step help, code snippets, or study summaries.</p>
+        </div>
+      </div>
+      <form method="post" action="/ai/ask" class="ai-form">
+        <div class="ai-composer">
+          <div class="ai-composer-head">
+            <div>
+              <h3 class="ai-kicker">What would you like help with?</h3>
+              <p class="ai-helper">Ask a question, paste a problem, or request code with explanation.</p>
+            </div>
+            <span class="ai-status">Ready to answer</span>
+          </div>
+          <label for="ai-question">Ask your question</label>
+          <textarea id="ai-question" class="ai-prompt" rows="5" name="question" placeholder="Explain recursion with an easy example, then show a Python version..." required></textarea>
+        </div>
+        <div class="ai-chips">
+          <button class="ai-chip" type="button" data-prompt="Explain recursion with a simple real-life example and a short Python code sample.">Recursion</button>
+          <button class="ai-chip" type="button" data-prompt="Teach me SQL joins in a simple way with one example for each join type.">SQL joins</button>
+          <button class="ai-chip" type="button" data-prompt="Summarize object oriented programming in easy points for exam preparation.">OOP summary</button>
+          <button class="ai-chip" type="button" data-prompt="Write a clean Python program and explain each part step by step.">Code + explain</button>
+        </div>
+        <div class="ai-toolbar-meta">
+          <span class="ai-hint">Tip: ask for examples, step-by-step breakdowns, or beginner-friendly explanations.</span>
+          <div class="toolbar-row">
+            <button class="btn btn-primary btn-inline" type="submit">Ask AI</button>
+          </div>
+        </div>
       </form>
       {% if ai_response %}
-        <h3>Question</h3>
-        <div class="pill">{{ ai_question }}</div>
-        <h3>Response</h3>
-        <div class="ai-toolbar">
-          <button class="btn-copy" type="button" id="copy-full-response">Copy Full Response</button>
+        <div class="ai-shell">
+          <div class="response-block">
+            <h3 class="response-block-title">Question</h3>
+            <div class="pill">{{ ai_question }}</div>
+          </div>
+          <div class="ai-answer-card">
+            <div class="ai-header">
+              <div>
+                <h3 class="ai-title">AI Response</h3>
+                <p class="ai-subtitle">Long answers and code stay inside this container without breaking the page layout.</p>
+              </div>
+              <div class="ai-toolbar">
+                <button class="btn-copy" type="button" id="copy-full-response">Copy Full Response</button>
+              </div>
+            </div>
+            <div id="ai-rendered-response" class="ai-response"></div>
+            <div class="ai-answer-meta">
+              <span class="ai-note">Try a follow-up to go deeper, simplify the answer, or ask for another example.</span>
+              <div class="followup-row">
+                <button class="followup-chip" type="button" data-followup="Explain this in simpler words with a very easy example.">Simplify it</button>
+                <button class="followup-chip" type="button" data-followup="Give me one more practical example and explain step by step.">More example</button>
+                <button class="followup-chip" type="button" data-followup="Turn this into short exam revision points.">Exam notes</button>
+              </div>
+            </div>
+          </div>
         </div>
-        <div id="ai-rendered-response" class="ai-response"></div>
         <pre id="ai-raw-response" style="display:none;">{{ ai_response }}</pre>
       {% endif %}
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Notices / Internship / Job News</h2>
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">Notices / Internship / Job News</h2>
+          <p>Stay updated with announcements, opportunities, and important academic information.</p>
+        </div>
+      </div>
       {% if notices %}
-        <table>
-          <tr><th>Type</th><th>Title</th><th>Message</th><th>Date</th></tr>
-          {% for n in notices %}
-            <tr>
-              <td>{{ n.category }}</td>
-              <td>{{ n.title }}</td>
-              <td>{{ n.message }}</td>
-              <td>{{ n.created_at }}</td>
-            </tr>
-          {% endfor %}
-        </table>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Type</th><th>Title</th><th>Message</th><th>Date</th></tr>
+            {% for n in notices %}
+              <tr>
+                <td>{{ n.category }}</td>
+                <td>{{ n.title }}</td>
+                <td>{{ n.message }}</td>
+                <td>{{ n.created_at }}</td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
       {% else %}
-        <p>No updates available.</p>
+        <div class="empty-state">No updates available yet. New notices and opportunities will appear here.</div>
       {% endif %}
     </div>
 
     <div class="card">
-      <h2 class="title" style="font-size:1.3rem;">Documents</h2>
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">Documents</h2>
+          <p>Open study resources, internship links, and shared reference material from one place.</p>
+        </div>
+      </div>
       {% if documents %}
-        <table>
-          <tr><th>Type</th><th>Title</th><th>Description</th><th>Link</th></tr>
-          {% for d in documents %}
-            <tr>
-              <td>{{ d.category }}</td>
-              <td>{{ d.title }}</td>
-              <td>{{ d.description or "-" }}</td>
-              <td><a href="{{ d.file_url }}" target="_blank">Open</a></td>
-            </tr>
-          {% endfor %}
-        </table>
+        <div class="table-wrap">
+          <table>
+            <tr><th>Type</th><th>Title</th><th>Description</th><th>Link</th></tr>
+            {% for d in documents %}
+              <tr>
+                <td>{{ d.category }}</td>
+                <td>{{ d.title }}</td>
+                <td>{{ d.description or "-" }}</td>
+                <td><a href="{{ d.file_url }}" target="_blank">Open</a></td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
       {% else %}
-        <p>No documents available.</p>
+        <div class="empty-state">No documents available right now. Shared files and links will show up here.</div>
       {% endif %}
     </div>
+    </div>
   </div>
-  {% if ai_response %}
   <script>
     (function () {
+      const form = document.querySelector('form[action="/ai/ask"]');
+      const statusEl = document.querySelector(".ai-status");
+      const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
       const rawEl = document.getElementById("ai-raw-response");
       const outEl = document.getElementById("ai-rendered-response");
       const copyAllBtn = document.getElementById("copy-full-response");
+      const promptInput = document.getElementById("ai-question");
+      const chips = document.querySelectorAll(".ai-chip");
+      const followupChips = document.querySelectorAll(".followup-chip");
+
+      chips.forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          if (!promptInput) return;
+          promptInput.value = chip.getAttribute("data-prompt") || "";
+          promptInput.focus();
+          promptInput.setSelectionRange(promptInput.value.length, promptInput.value.length);
+        });
+      });
+
+      followupChips.forEach(function (chip) {
+        chip.addEventListener("click", function () {
+          if (!promptInput) return;
+          const followup = chip.getAttribute("data-followup") || "";
+          promptInput.value = promptInput.value
+            ? promptInput.value.trim() + "\n\n" + followup
+            : followup;
+          promptInput.focus();
+          promptInput.setSelectionRange(promptInput.value.length, promptInput.value.length);
+          window.scrollTo({ top: promptInput.getBoundingClientRect().top + window.scrollY - 120, behavior: "smooth" });
+        });
+      });
+
+      if (form && statusEl && submitBtn) {
+        form.addEventListener("submit", function () {
+          statusEl.textContent = "Thinking...";
+          statusEl.classList.add("loading");
+          submitBtn.disabled = true;
+          submitBtn.textContent = "Generating...";
+        });
+      }
+
       if (!rawEl || !outEl) return;
 
       const raw = rawEl.textContent || "";
@@ -154,14 +280,61 @@
         blocks.push({ type: "text", value: raw });
       }
 
+      function renderInlineCode(text) {
+        const fragment = document.createDocumentFragment();
+        const parts = text.split(/(`[^`]+`)/g);
+        parts.forEach(function (part) {
+          if (!part) return;
+          if (part.startsWith("`") && part.endsWith("`") && part.length >= 2) {
+            const code = document.createElement("code");
+            code.className = "ai-inline-code";
+            code.textContent = part.slice(1, -1);
+            fragment.appendChild(code);
+            return;
+          }
+          fragment.appendChild(document.createTextNode(part));
+        });
+        return fragment;
+      }
+
       let codeIndex = 0;
       for (const block of blocks) {
         if (!block.value) continue;
         if (block.type === "text") {
-          const div = document.createElement("div");
-          div.className = "pill ai-text";
-          div.textContent = block.value;
-          outEl.appendChild(div);
+          const lines = block.value.split("\n").map(function (line) { return line.trimEnd(); });
+          const wrapper = document.createElement("div");
+          wrapper.className = "pill ai-text ai-message";
+
+          let listEl = null;
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) {
+              listEl = null;
+              continue;
+            }
+
+            const isListItem = /^([-*]|\d+\.)\s+/.test(trimmed);
+            if (isListItem) {
+              if (!listEl) {
+                listEl = document.createElement("ul");
+                listEl.className = "ai-list";
+                wrapper.appendChild(listEl);
+              }
+              const item = document.createElement("li");
+              item.className = "ai-list-item";
+              item.appendChild(renderInlineCode(trimmed.replace(/^([-*]|\d+\.)\s+/, "")));
+              listEl.appendChild(item);
+              continue;
+            }
+
+            listEl = null;
+            const p = document.createElement("p");
+            p.className = "ai-paragraph";
+            p.appendChild(renderInlineCode(trimmed));
+            wrapper.appendChild(p);
+          }
+
+          outEl.appendChild(wrapper);
           continue;
         }
 
@@ -202,5 +375,4 @@
       }
     })();
   </script>
-  {% endif %}
 {% endblock %}

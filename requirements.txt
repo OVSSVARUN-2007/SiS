@@ -3,6 +3,7 @@ uvicorn
 jinja2
 sqlalchemy
 pymysql
+cryptography
 python-dotenv
 python-multipart
 requests

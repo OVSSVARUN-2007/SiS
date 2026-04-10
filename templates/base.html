@@ -4,9 +4,85 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}SiS{% endblock %}</title>
+  <script>
+    (function () {
+      const savedTheme = localStorage.getItem("sis-theme");
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = savedTheme || (prefersDark ? "dark" : "light");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
   <link rel="stylesheet" href="/static/css/app.css" />
 </head>
 <body>
-  {% block body %}{% endblock %}
+  <div class="page-shell">
+    <div class="bg-orb bg-orb-a"></div>
+    <div class="bg-orb bg-orb-b"></div>
+    <div class="bg-grid"></div>
+
+    <header class="site-header">
+      <nav class="site-nav">
+        <a class="brand" href="/">
+          <span class="brand-mark">SiS</span>
+          <span class="brand-text">
+            <strong>Student Information System</strong>
+            <small>Campus portal</small>
+          </span>
+        </a>
+
+        <button class="nav-toggle" type="button" id="nav-toggle" aria-expanded="false" aria-controls="nav-links">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div class="nav-links" id="nav-links">
+          <a href="/">Home</a>
+          <a href="/login">Student Login</a>
+          <a href="/signup">Signup</a>
+          <a href="/admin/login">Admin</a>
+          <button class="theme-toggle" type="button" id="theme-toggle" aria-label="Toggle color mode">
+            <span class="theme-toggle-icon" aria-hidden="true">◐</span>
+            <span class="theme-toggle-label">Theme</span>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="page-content">
+      {% block body %}{% endblock %}
+    </main>
+  </div>
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById("theme-toggle");
+      const navToggle = document.getElementById("nav-toggle");
+      const navLinks = document.getElementById("nav-links");
+
+      if (toggle) {
+        toggle.addEventListener("click", function () {
+          const nextTheme = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+          root.setAttribute("data-theme", nextTheme);
+          localStorage.setItem("sis-theme", nextTheme);
+        });
+      }
+
+      if (navToggle && navLinks) {
+        navToggle.addEventListener("click", function () {
+          const expanded = navToggle.getAttribute("aria-expanded") === "true";
+          navToggle.setAttribute("aria-expanded", String(!expanded));
+          navLinks.classList.toggle("open");
+        });
+
+        navLinks.querySelectorAll("a").forEach(function (link) {
+          link.addEventListener("click", function () {
+            navLinks.classList.remove("open");
+            navToggle.setAttribute("aria-expanded", "false");
+          });
+        });
+      }
+    })();
+  </script>
 </body>
 </html>
