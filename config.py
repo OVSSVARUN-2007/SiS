@@ -39,6 +39,14 @@ def _read_env(name: str, default: str = "") -> str:
     return (os.getenv(name, default) or "").strip()
 
 
+def _read_first_env(*names: str, default: str = "") -> str:
+    for name in names:
+        value = _read_env(name)
+        if value:
+            return value
+    return default
+
+
 def _default_database_url(is_vercel: bool) -> str:
     explicit_url = _read_env("DATABASE_URL")
     if explicit_url:
@@ -69,7 +77,7 @@ def get_settings() -> Settings:
         db_port=_read_env("DB_PORT", "3306"),
         db_name=_read_env("DB_NAME", "sis"),
         secret_key=_read_env("SECRET_KEY", "change-me-now"),
-        hf_api_key=_read_env("HF_API_KEY", ""),
+        hf_api_key=_read_first_env("HF_API_KEY", "HUGGINGFACE_API_KEY"),
         hf_model_id=_read_env("HF_MODEL_ID", "mistralai/Mistral-7B-Instruct-v0.1"),
         admin_setup_key=_read_env("ADMIN_SETUP_KEY", ""),
         is_vercel=is_vercel,

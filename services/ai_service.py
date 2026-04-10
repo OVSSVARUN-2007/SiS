@@ -89,7 +89,10 @@ def _ask_chat_route(question: str, model_id: str):
 
 def ask_ai(question: str):
     if not HF_API_KEY:
-        return "AI service is not configured. Add HF_API_KEY in .env."
+        return (
+            "AI service is not configured. Set HF_API_KEY "
+            "(or HUGGINGFACE_API_KEY) in your deployment environment variables."
+        )
 
     models_to_try = [MODEL_ID] + [m for m in FALLBACK_MODELS if m != MODEL_ID]
     last_error = "Unknown AI service error."
