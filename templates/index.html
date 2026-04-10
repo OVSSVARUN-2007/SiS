@@ -32,7 +32,7 @@
       <h2 class="title" style="font-size:1.3rem;">Assignments</h2>
       {% if assignments %}
         <table>
-          <tr><th>Title</th><th>Due Date</th><th>Status</th></tr>
+          <tr><th>Title</th><th>Due Date</th><th>Status</th><th>Action</th></tr>
           {% for assignment in assignments %}
             <tr>
               <td>{{ assignment.title }}</td>
@@ -42,6 +42,16 @@
                   <span class="tag-done">Submitted</span>
                 {% else %}
                   <span class="tag-pending">Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if assignment.id in submitted_assignment_ids %}
+                  <span class="tag-done">Submitted</span>
+                {% else %}
+                  <form method="post" action="/assignments/{{ assignment.id }}/submit">
+                    <textarea name="content" rows="2" placeholder="Add your answer/notes (optional)"></textarea>
+                    <button class="btn btn-primary" type="submit">Submit</button>
+                  </form>
                 {% endif %}
               </td>
             </tr>

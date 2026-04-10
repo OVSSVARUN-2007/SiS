@@ -18,8 +18,9 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    ensure_schema_upgrade()
+    if settings.enable_startup_schema_sync:
+        Base.metadata.create_all(bind=engine)
+        ensure_schema_upgrade()
     yield
 
 app = FastAPI(title="SiS - Student Information System", lifespan=lifespan)
@@ -30,9 +31,8 @@ app.include_router(student_router)
 app.include_router(admin_router)
 app.include_router(ai_router)
 
-if not os.path.isdir("static"):
-    os.makedirs("static", exist_ok=True)
-app.mount("/static", StaticFiles(directory="static"), name="static")
+if os.path.isdir("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.get("/")

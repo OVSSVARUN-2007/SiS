@@ -6,7 +6,10 @@ from datetime import datetime
 
 from database import get_db
 from models import (
+    Assignment,
     Attendance,
+    Enrollment,
+    Submission,
     Student,
     StudentRegister,
 )
@@ -194,3 +197,60 @@ def attendance_page(request: Request, db: Session = Depends(get_db)):
             "percentage": percentage,
         },
     )
+
+
+@router.post("/assignments/{assignment_id}/submit")
+async def submit_assignment(
+    assignment_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+    if user.role == "admin":
+        return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+    assignment = db.query(Assignment).filter(Assignment.id == assignment_id).first()
+    if not assignment:
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    enrolled_course_ids = {
+        row.course_id
+        for row in db.query(Enrollment).filter(Enrollment.student_id == user.id).all()
+        if row.course_id
+    }
+    class_match = True
+    if assignment.department and assignment.department != user.department:
+        class_match = False
+    if assignment.academic_year and assignment.academic_year != user.academic_year:
+        class_match = False
+    if assignment.section and assignment.section != user.section:
+        class_match = False
+
+    if not (assignment.course_id in enrolled_course_ids or class_match):
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    form = await safe_form_to_dict(request)
+    content = (form.get("content") or "").strip()
+
+    existing_submission = (
+        db.query(Submission)
+        .filter(
+            Submission.assignment_id == assignment_id,
+            Submission.student_id == user.id,
+        )
+        .first()
+    )
+    if existing_submission:
+        return RedirectResponse(url="/dashboard", status_code=303)
+
+    db.add(
+        Submission(
+            assignment_id=assignment_id,
+            student_id=user.id,
+            content=content or "Submitted",
+        )
+    )
+    db.commit()
+    return RedirectResponse(url="/dashboard", status_code=303)
