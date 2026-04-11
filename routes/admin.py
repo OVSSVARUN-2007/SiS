@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from database import get_db
 from config import get_settings
 from models import Assignment, Attendance, Course, Document, Notice, StudentRegister
+from services.verification_service import send_verification_otp
 from utils.form_data import safe_form_to_dict
 from utils.security import hash_password, verify_password
 
@@ -93,7 +94,7 @@ def admin_signup_page(request: Request, db: Session = Depends(get_db)):
     return templates.TemplateResponse(
         request,
         "admin_signup.html",
-        {"request": request, "error": None, "require_setup_key": require_key},
+        {"request": request, "error": None, "message": None, "require_setup_key": require_key},
     )
 
 
@@ -113,7 +114,7 @@ async def admin_signup(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse(
             request,
             "admin_signup.html",
-            {"request": request, "error": "Invalid admin setup key.", "require_setup_key": True},
+            {"request": request, "error": "Invalid admin setup key.", "message": None, "require_setup_key": True},
             status_code=403,
         )
 
@@ -121,7 +122,7 @@ async def admin_signup(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse(
             request,
             "admin_signup.html",
-            {"request": request, "error": "Name, email and password are required.", "require_setup_key": require_key},
+            {"request": request, "error": "Name, email and password are required.", "message": None, "require_setup_key": require_key},
             status_code=400,
         )
 
@@ -130,7 +131,7 @@ async def admin_signup(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse(
             request,
             "admin_signup.html",
-            {"request": request, "error": "Email already exists.", "require_setup_key": require_key},
+            {"request": request, "error": "Email already exists.", "message": None, "require_setup_key": require_key},
             status_code=400,
         )
 
@@ -140,19 +141,29 @@ async def admin_signup(request: Request, db: Session = Depends(get_db)):
         password=hash_password(password),
         role="admin",
         is_active=1,
+        email_verified=0,
     )
     db.add(admin_user)
+    delivery_mode = send_verification_otp(admin_user)
     db.commit()
 
-    request.session["user_id"] = admin_user.id
-    request.session["user_name"] = admin_user.full_name
-    request.session["role"] = "admin"
-    return RedirectResponse(url="/admin/dashboard", status_code=303)
+    return templates.TemplateResponse(
+        request,
+        "verify_email.html",
+        {
+            "request": request,
+            "email": email,
+            "error": None,
+            "message": "Admin account created. Please verify your email to continue.",
+            "delivery_mode": delivery_mode,
+        },
+        status_code=201,
+    )
 
 
 @router.get("/login")
 def admin_login_page(request: Request):
-    return templates.TemplateResponse(request, "admin_login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "admin_login.html", {"request": request, "error": None, "message": None})
 
 
 @router.post("/login")
@@ -166,8 +177,19 @@ async def admin_login(request: Request, db: Session = Depends(get_db)):
         return templates.TemplateResponse(
             request,
             "admin_login.html",
-            {"request": request, "error": "Invalid admin credentials."},
+            {"request": request, "error": "Invalid admin credentials.", "message": None},
             status_code=401,
+        )
+    if not user.email_verified:
+        return templates.TemplateResponse(
+            request,
+            "admin_login.html",
+            {
+                "request": request,
+                "error": "Please verify your email before logging in.",
+                "message": f"Use the OTP sent to {user.email} or request a new one.",
+            },
+            status_code=403,
         )
 
     request.session["user_id"] = user.id

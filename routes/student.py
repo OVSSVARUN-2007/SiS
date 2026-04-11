@@ -13,6 +13,7 @@ from models import (
     Student,
     StudentRegister,
 )
+from services.verification_service import clear_email_otp, is_otp_valid, send_verification_otp
 from services.dashboard_service import build_student_dashboard_context
 from utils.form_data import safe_form_to_dict
 from utils.security import hash_password, verify_password
@@ -30,7 +31,7 @@ def get_current_user(request: Request, db: Session) -> StudentRegister | None:
 
 @router.get("/signup")
 def signup_page(request: Request):
-    return templates.TemplateResponse(request, "signup.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "signup.html", {"request": request, "error": None, "message": None})
 
 
 @router.post("/signup")
@@ -94,23 +95,33 @@ async def signup(
         section=section,
         role="student",
         is_active=1,
+        email_verified=0,
     )
     db.add(user)
     db.flush()
 
     # Keep legacy students table synced for compatibility with existing modules.
     db.add(Student(name=full_name, email=email, password=hashed_password, role="student"))
+    delivery_mode = send_verification_otp(user)
     db.commit()
 
-    request.session["user_id"] = user.id
-    request.session["user_name"] = user.full_name
-    request.session["role"] = "student"
-    return RedirectResponse(url="/dashboard", status_code=303)
+    return templates.TemplateResponse(
+        request,
+        "verify_email.html",
+        {
+            "request": request,
+            "email": email,
+            "error": None,
+            "message": "Account created. Please verify your email to continue.",
+            "delivery_mode": delivery_mode,
+        },
+        status_code=201,
+    )
 
 
 @router.get("/login")
 def login_page(request: Request):
-    return templates.TemplateResponse(request, "login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(request, "login.html", {"request": request, "error": None, "message": None})
 
 
 @router.post("/login")
@@ -127,8 +138,19 @@ async def login(
         return templates.TemplateResponse(
             request,
             "login.html",
-            {"request": request, "error": "Invalid email or password."},
+            {"request": request, "error": "Invalid email or password.", "message": None},
             status_code=401,
+        )
+    if not user.email_verified:
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {
+                "request": request,
+                "error": "Please verify your email before logging in.",
+                "message": f"Use the OTP sent to {user.email} or request a new one.",
+            },
+            status_code=403,
         )
 
     request.session["user_id"] = user.id
@@ -143,6 +165,86 @@ async def login(
 def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/login", status_code=303)
+
+
+@router.get("/verify-email")
+def verify_email_page(request: Request):
+    email = (request.query_params.get("email") or "").strip().lower()
+    return templates.TemplateResponse(
+        request,
+        "verify_email.html",
+        {"request": request, "email": email, "error": None, "message": None, "delivery_mode": None},
+    )
+
+
+@router.post("/verify-email")
+async def verify_email(request: Request, db: Session = Depends(get_db)):
+    form = await safe_form_to_dict(request)
+    email = (form.get("email") or "").strip().lower()
+    otp = (form.get("otp") or "").strip()
+    user = db.query(StudentRegister).filter(StudentRegister.email == email).first()
+
+    if not user:
+        return templates.TemplateResponse(
+            request,
+            "verify_email.html",
+            {"request": request, "email": email, "error": "Account not found.", "message": None, "delivery_mode": None},
+            status_code=404,
+        )
+    if user.email_verified:
+        return templates.TemplateResponse(
+            request,
+            "login.html",
+            {"request": request, "error": None, "message": "Email already verified. You can log in now."},
+        )
+    if not is_otp_valid(user, otp):
+        return templates.TemplateResponse(
+            request,
+            "verify_email.html",
+            {
+                "request": request,
+                "email": email,
+                "error": "Invalid or expired OTP. Please try again.",
+                "message": None,
+                "delivery_mode": None,
+            },
+            status_code=400,
+        )
+
+    clear_email_otp(user)
+    db.commit()
+    return templates.TemplateResponse(
+        request,
+        "login.html",
+        {"request": request, "error": None, "message": "Email verified successfully. Please log in."},
+    )
+
+
+@router.post("/resend-otp")
+async def resend_otp(request: Request, db: Session = Depends(get_db)):
+    form = await safe_form_to_dict(request)
+    email = (form.get("email") or "").strip().lower()
+    user = db.query(StudentRegister).filter(StudentRegister.email == email).first()
+    if not user:
+        return templates.TemplateResponse(
+            request,
+            "verify_email.html",
+            {"request": request, "email": email, "error": "Account not found.", "message": None, "delivery_mode": None},
+            status_code=404,
+        )
+    delivery_mode = send_verification_otp(user)
+    db.commit()
+    return templates.TemplateResponse(
+        request,
+        "verify_email.html",
+        {
+            "request": request,
+            "email": email,
+            "error": None,
+            "message": "A new OTP has been sent.",
+            "delivery_mode": delivery_mode,
+        },
+    )
 
 
 @router.get("/dashboard")

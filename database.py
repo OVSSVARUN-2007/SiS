@@ -57,13 +57,14 @@ def _column_exists(connection, table_name: str, column_name: str) -> bool:
 
 
 def ensure_schema_upgrade() -> None:
-    if DATABASE_BACKEND != "mysql":
-        return
-
     upgrades = [
         ("student_register", "department", "VARCHAR(100) NULL"),
         ("student_register", "academic_year", "INT NULL"),
         ("student_register", "section", "VARCHAR(20) NULL"),
+        ("student_register", "email_verified", "INT NULL DEFAULT 0"),
+        ("student_register", "email_otp_code", "VARCHAR(10) NULL"),
+        ("student_register", "email_otp_expires_at", "TIMESTAMP NULL"),
+        ("student_register", "email_otp_sent_at", "TIMESTAMP NULL"),
         ("assignments", "department", "VARCHAR(100) NULL"),
         ("assignments", "academic_year", "INT NULL"),
         ("assignments", "section", "VARCHAR(20) NULL"),
@@ -85,9 +86,18 @@ def ensure_schema_upgrade() -> None:
         for table_name, column_name, definition in upgrades:
             if _column_exists(connection, table_name, column_name):
                 continue
-            connection.execute(
-                text(f"ALTER TABLE `{table_name}` ADD COLUMN `{column_name}` {definition}")
-            )
+            if DATABASE_BACKEND == "mysql":
+                connection.execute(
+                    text(f"ALTER TABLE `{table_name}` ADD COLUMN `{column_name}` {definition}")
+                )
+            else:
+                sqlite_definition = (
+                    definition.replace("ENUM('notice','internship','job') NOT NULL DEFAULT 'notice'", "VARCHAR(20) NOT NULL DEFAULT 'notice'")
+                    .replace("ENUM('document','internship','job') NOT NULL DEFAULT 'document'", "VARCHAR(20) NOT NULL DEFAULT 'document'")
+                )
+                connection.execute(
+                    text(f'ALTER TABLE "{table_name}" ADD COLUMN "{column_name}" {sqlite_definition}')
+                )
 
 
 def ensure_database_ready() -> None:

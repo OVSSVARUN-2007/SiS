@@ -29,6 +29,10 @@ class StudentRegister(Base):
     section = Column(String(20), nullable=True, index=True)
     role = Column(Enum("student", "admin"), nullable=True, server_default="student")
     is_active = Column(Integer, nullable=True, server_default=text("1"))
+    email_verified = Column(Integer, nullable=True, server_default=text("0"))
+    email_otp_code = Column(String(10), nullable=True)
+    email_otp_expires_at = Column(TIMESTAMP, nullable=True)
+    email_otp_sent_at = Column(TIMESTAMP, nullable=True)
     created_at = Column(TIMESTAMP, nullable=True, server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(
         TIMESTAMP,

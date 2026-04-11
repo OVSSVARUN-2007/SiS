@@ -7,6 +7,9 @@
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
+    {% if message %}
+      <div class="success">{{ message }}</div>
+    {% endif %}
     <form method="post" action="/signup">
       <div class="grid-2">
         <div>

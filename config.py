@@ -21,6 +21,17 @@ class Settings:
     hf_api_key: str
     hf_model_id: str
     admin_setup_key: str
+    jwt_algorithm: str
+    access_token_expire_minutes: int
+    refresh_token_expire_days: int
+    otp_expire_minutes: int
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str
+    smtp_from_email: str
+    smtp_from_name: str
+    smtp_use_tls: bool
     is_vercel: bool
     enable_startup_schema_sync: bool
 
@@ -87,6 +98,17 @@ def get_settings() -> Settings:
         hf_api_key=_read_first_env("HF_API_KEY", "HUGGINGFACE_API_KEY"),
         hf_model_id=_read_env("HF_MODEL_ID", "mistralai/Mistral-7B-Instruct-v0.1"),
         admin_setup_key=_read_env("ADMIN_SETUP_KEY", ""),
+        jwt_algorithm=_read_env("JWT_ALGORITHM", "HS256"),
+        access_token_expire_minutes=int(_read_env("ACCESS_TOKEN_EXPIRE_MINUTES", "30") or "30"),
+        refresh_token_expire_days=int(_read_env("REFRESH_TOKEN_EXPIRE_DAYS", "7") or "7"),
+        otp_expire_minutes=int(_read_env("OTP_EXPIRE_MINUTES", "10") or "10"),
+        smtp_host=_read_env("SMTP_HOST", ""),
+        smtp_port=int(_read_env("SMTP_PORT", "587") or "587"),
+        smtp_username=_read_env("SMTP_USERNAME", ""),
+        smtp_password=_read_env("SMTP_PASSWORD", ""),
+        smtp_from_email=_read_env("SMTP_FROM_EMAIL", ""),
+        smtp_from_name=_read_env("SMTP_FROM_NAME", "SiS"),
+        smtp_use_tls=_read_env("SMTP_USE_TLS", "true").lower() in {"1", "true", "yes", "on"},
         is_vercel=is_vercel,
         enable_startup_schema_sync=enable_startup_schema_sync,
     )

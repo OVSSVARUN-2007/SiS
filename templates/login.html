@@ -7,6 +7,9 @@
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
+    {% if message %}
+      <div class="success">{{ message }}</div>
+    {% endif %}
     <form method="post" action="/login">
       <label>Email</label>
       <input type="email" name="email" required />
@@ -15,6 +18,7 @@
       <button class="btn btn-primary btn-block" type="submit">Login</button>
     </form>
     <div class="meta-links">New user? <a href="/signup">Create account</a></div>
+    <div class="meta-links"><a href="/verify-email">Verify email / resend OTP</a></div>
     <div class="meta-links">Admin? <a href="/admin/login">Admin Login</a></div>
   </div>
 </div>

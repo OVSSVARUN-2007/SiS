@@ -10,3 +10,6 @@ requests
 email-validator
 starlette
 itsdangerous
+passlib[bcrypt]
+PyJWT
+bcrypt<4.1
