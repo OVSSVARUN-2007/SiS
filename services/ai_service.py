@@ -20,8 +20,24 @@ FALLBACK_MODELS = [
 headers = {"Authorization": f"Bearer {HF_API_KEY}"} if HF_API_KEY else {}
 
 
-def _normalize_error_message(error_text: str, status_code: int | None = None) -> str:
-    lowered = (error_text or "").lower()
+def _stringify_error(error_value) -> str:
+    if isinstance(error_value, str):
+        return error_value
+    if isinstance(error_value, dict):
+        for key in ("message", "error", "detail", "details", "error_description"):
+            value = error_value.get(key)
+            if value:
+                return _stringify_error(value)
+        return str(error_value)
+    if isinstance(error_value, list):
+        parts = [_stringify_error(item) for item in error_value]
+        return "; ".join(part for part in parts if part)
+    return str(error_value or "")
+
+
+def _normalize_error_message(error_text, status_code: int | None = None) -> str:
+    normalized_text = _stringify_error(error_text).strip()
+    lowered = normalized_text.lower()
 
     if status_code in {401, 403} or "expired" in lowered or "access token" in lowered or "unauthorized" in lowered:
         return (
@@ -35,7 +51,7 @@ def _normalize_error_message(error_text: str, status_code: int | None = None) ->
             "Set HF_MODEL_ID in .env to a model enabled in your Hugging Face account."
         )
 
-    return error_text or "Unknown AI service error."
+    return normalized_text or "Unknown AI service error."
 
 
 def _extract_error(response):
