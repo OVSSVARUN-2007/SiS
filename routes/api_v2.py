@@ -127,8 +127,6 @@ def api_login(payload: LoginRequest, db: Session = Depends(get_db)):
     user = db.query(StudentRegister).filter(StudentRegister.email == payload.email.lower()).first()
     if not user or not verify_password(payload.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    if not user.email_verified:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Email verification required")
     return _build_token_response(user)
 
 

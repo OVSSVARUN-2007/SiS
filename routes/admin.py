@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 from database import get_db
 from config import get_settings
 from models import Assignment, Attendance, Course, Document, Notice, StudentRegister, StudentRequest
-from services.verification_service import send_verification_otp
 from utils.form_data import safe_form_to_dict
 from utils.security import hash_password, verify_password
 
@@ -184,21 +183,18 @@ async def admin_signup(request: Request, db: Session = Depends(get_db)):
         password=hash_password(password),
         role="admin",
         is_active=1,
-        email_verified=0,
+        email_verified=1,
     )
     db.add(admin_user)
-    delivery_mode = send_verification_otp(admin_user)
     db.commit()
 
     return templates.TemplateResponse(
         request,
-        "verify_email.html",
+        "admin_login.html",
         {
             "request": request,
-            "email": email,
             "error": None,
-            "message": "Admin account created. Please verify your email to continue.",
-            "delivery_mode": delivery_mode,
+            "message": "Admin account created successfully. You can log in now.",
         },
         status_code=201,
     )
@@ -223,18 +219,6 @@ async def admin_login(request: Request, db: Session = Depends(get_db)):
             {"request": request, "error": "Invalid admin credentials.", "message": None},
             status_code=401,
         )
-    if not user.email_verified:
-        return templates.TemplateResponse(
-            request,
-            "admin_login.html",
-            {
-                "request": request,
-                "error": "Please verify your email before logging in.",
-                "message": f"Use the OTP sent to {user.email} or request a new one.",
-            },
-            status_code=403,
-        )
-
     request.session["user_id"] = user.id
     request.session["user_name"] = user.full_name
     request.session["role"] = "admin"

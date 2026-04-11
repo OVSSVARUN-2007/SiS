@@ -15,7 +15,6 @@ from routes.api_v2 import router as api_v2_router
 from routes.student import router as student_router
 
 settings = get_settings()
-ensure_database_ready()
 
 
 @asynccontextmanager
