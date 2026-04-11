@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Admin Dashboard{% endblock %}
+{% block extra_head %}
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+{% endblock %}
 {% block body %}
   <div class="topbar">
     <div class="topbar-title">Admin Dashboard - {{ admin_user.full_name }}</div>
@@ -12,6 +16,23 @@
     {% if error %}
       <div class="error">{{ error }}</div>
     {% endif %}
+    <div id="admin-dashboard-react" class="react-dashboard-shell"></div>
+    <script id="admin-dashboard-data" type="application/json">{{ admin_dashboard_ui_data|tojson }}</script>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <strong>{{ students|length }}</strong>
+        <span>Students in view</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ request_counts.pending if request_counts else 0 }}</strong>
+        <span>Pending requests</span>
+      </div>
+      <div class="stat-card">
+        <strong>{{ attendance_rows|length }}</strong>
+        <span>Recent attendance rows</span>
+      </div>
+    </div>
 
     <div class="card">
       <h2 class="section-title">Add Course</h2>
@@ -117,6 +138,57 @@
     </div>
 
     <div class="card">
+      <h2 class="section-title">Student Requests</h2>
+      {% if request_rows %}
+        <div class="table-wrap">
+          <table>
+            <tr><th>Student</th><th>Category</th><th>Title</th><th>Status</th><th>Proof</th><th>Review</th></tr>
+            {% for item in request_rows %}
+              <tr>
+                <td>{{ item.student.full_name if item.student else "-" }}</td>
+                <td>{{ item.category }}</td>
+                <td>
+                  <strong>{{ item.title }}</strong><br />
+                  <small>{{ item.description }}</small>
+                </td>
+                <td>
+                  {% if item.status == "approved" %}
+                    <span class="tag tag-done">Approved</span>
+                  {% elif item.status == "rejected" %}
+                    <span class="tag tag-rejected">Rejected</span>
+                  {% else %}
+                    <span class="tag tag-pending">Pending</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if item.proof_url %}
+                    <a href="{{ item.proof_url }}" target="_blank">Open</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>
+                  <form method="post" action="/admin/requests/{{ item.id }}/review">
+                    <label>Status</label>
+                    <select name="status" required>
+                      <option value="approved" {% if item.status == "approved" %}selected{% endif %}>Approve</option>
+                      <option value="rejected" {% if item.status == "rejected" %}selected{% endif %}>Reject</option>
+                    </select>
+                    <label>Remark</label>
+                    <textarea name="admin_remark" rows="2" placeholder="Optional admin note">{{ item.admin_remark or "" }}</textarea>
+                    <button class="btn btn-primary" type="submit">Save Review</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">No student requests yet.</div>
+      {% endif %}
+    </div>
+
+    <div class="card">
       <h2 class="section-title">All Students</h2>
       <form method="get" action="/admin/dashboard" class="grid-3">
         <div><label>Department</label><input type="text" name="department" value="{{ filters.department }}" /></div>
@@ -159,4 +231,7 @@
       </div>
     </div>
   </div>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="/static/js/admin_dashboard_react.js"></script>
 {% endblock %}

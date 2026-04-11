@@ -9,6 +9,7 @@ from models import (
     Assignment,
     Attendance,
     Enrollment,
+    StudentRequest,
     Submission,
     Student,
     StudentRegister,
@@ -265,6 +266,47 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             **context,
         },
     )
+
+
+@router.post("/requests")
+async def create_request(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+    if user.role == "admin":
+        return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+    form = await safe_form_to_dict(request)
+    category = (form.get("category") or "").strip().lower()
+    title = (form.get("title") or "").strip()
+    description = (form.get("description") or "").strip()
+    proof_url = (form.get("proof_url") or "").strip() or None
+
+    if category not in {"bonafide", "leave", "certificate"} or not title or not description:
+        context = build_student_dashboard_context(db, user)
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "request": request,
+                **context,
+                "request_error": "Category, title, and description are required.",
+            },
+            status_code=400,
+        )
+
+    db.add(
+        StudentRequest(
+            student_id=user.id,
+            category=category,
+            title=title,
+            description=description,
+            proof_url=proof_url,
+            status="pending",
+        )
+    )
+    db.commit()
+    return RedirectResponse(url="/dashboard", status_code=303)
 
 
 @router.get("/attendance")

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import RedirectResponse
@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from config import get_settings
-from models import Assignment, Attendance, Course, Document, Notice, StudentRegister
+from models import Assignment, Attendance, Course, Document, Notice, StudentRegister, StudentRequest
 from services.verification_service import send_verification_otp
 from utils.form_data import safe_form_to_dict
 from utils.security import hash_password, verify_password
@@ -26,6 +26,12 @@ def parse_int(value: str | None) -> int | None:
 def parse_date(value: str | None):
     if not value or not value.strip():
         return None
+
+
+def to_iso(value):
+    if hasattr(value, "isoformat"):
+        return value.isoformat()
+    return value
     try:
         return datetime.strptime(value.strip(), "%Y-%m-%d").date()
     except ValueError:
@@ -67,6 +73,11 @@ def render_admin_dashboard(request: Request, db: Session, admin_user, error: str
     attendance_rows = db.query(Attendance).order_by(Attendance.id.desc()).limit(20).all()
     notices = db.query(Notice).order_by(Notice.id.desc()).limit(20).all()
     documents = db.query(Document).order_by(Document.id.desc()).limit(20).all()
+    request_rows = db.query(StudentRequest).order_by(StudentRequest.created_at.desc(), StudentRequest.id.desc()).limit(30).all()
+    request_counts = {"pending": 0, "approved": 0, "rejected": 0}
+    for item in request_rows:
+        if item.status in request_counts:
+            request_counts[item.status] += 1
 
     return templates.TemplateResponse(
         request,
@@ -80,6 +91,38 @@ def render_admin_dashboard(request: Request, db: Session, admin_user, error: str
             "attendance_rows": attendance_rows,
             "notices": notices,
             "documents": documents,
+            "request_rows": request_rows,
+            "request_counts": request_counts,
+            "admin_dashboard_ui_data": {
+                "adminName": admin_user.full_name,
+                "stats": [
+                    {"label": "Students in view", "value": len(students)},
+                    {"label": "Pending requests", "value": request_counts["pending"]},
+                    {"label": "Recent attendance", "value": len(attendance_rows)},
+                ],
+                "requests": [
+                    {
+                        "id": item.id,
+                        "studentName": item.student.full_name if item.student else "-",
+                        "category": item.category,
+                        "title": item.title,
+                        "status": item.status,
+                        "remark": item.admin_remark or "",
+                        "createdAt": to_iso(item.created_at),
+                    }
+                    for item in request_rows[:8]
+                ],
+                "students": [
+                    {
+                        "id": item.id,
+                        "name": item.full_name,
+                        "department": item.department or "-",
+                        "academicYear": item.academic_year or "-",
+                        "section": item.section or "-",
+                    }
+                    for item in students[:8]
+                ],
+            },
             "filters": filters,
             "error": error,
         },
@@ -364,5 +407,29 @@ async def create_document(request: Request, db: Session = Depends(get_db)):
             created_by=admin_user.id,
         )
     )
+    db.commit()
+    return RedirectResponse(url="/admin/dashboard", status_code=303)
+
+
+@router.post("/requests/{request_id}/review")
+async def review_request(request_id: int, request: Request, db: Session = Depends(get_db)):
+    admin_user = get_admin_user(request, db)
+    if not admin_user:
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    form = await safe_form_to_dict(request)
+    status_value = (form.get("status") or "").strip().lower()
+    admin_remark = (form.get("admin_remark") or "").strip() or None
+
+    request_row = db.query(StudentRequest).filter(StudentRequest.id == request_id).first()
+    if not request_row:
+        return render_admin_dashboard(request, db, admin_user, "Request not found.")
+    if status_value not in {"approved", "rejected"}:
+        return render_admin_dashboard(request, db, admin_user, "Review status must be approved or rejected.")
+
+    request_row.status = status_value
+    request_row.admin_remark = admin_remark
+    request_row.reviewed_by = admin_user.id
+    request_row.reviewed_at = datetime.now(timezone.utc).replace(tzinfo=None)
     db.commit()
     return RedirectResponse(url="/admin/dashboard", status_code=303)

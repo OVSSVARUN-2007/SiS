@@ -104,6 +104,39 @@ class Submission(Base):
     student = relationship("StudentRegister")
 
 
+class StudentRequest(Base):
+    __tablename__ = "student_requests"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    student_id = Column(Integer, ForeignKey("student_register.id"), nullable=False, index=True)
+    category = Column(
+        Enum("bonafide", "leave", "certificate"),
+        nullable=False,
+        server_default="bonafide",
+    )
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    proof_url = Column(String(500), nullable=True)
+    status = Column(
+        Enum("pending", "approved", "rejected"),
+        nullable=False,
+        server_default="pending",
+    )
+    admin_remark = Column(Text, nullable=True)
+    reviewed_by = Column(Integer, ForeignKey("student_register.id"), nullable=True, index=True)
+    reviewed_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=True, server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(
+        TIMESTAMP,
+        nullable=True,
+        server_default=text("CURRENT_TIMESTAMP"),
+        server_onupdate=text("CURRENT_TIMESTAMP"),
+    )
+
+    student = relationship("StudentRegister", foreign_keys=[student_id])
+    reviewer = relationship("StudentRegister", foreign_keys=[reviewed_by])
+
+
 class Attendance(Base):
     __tablename__ = "attendance"
 

@@ -492,6 +492,12 @@ td {
   background: rgba(176, 123, 12, 0.14);
 }
 
+.tag-rejected {
+  color: var(--danger);
+  font-weight: 700;
+  background: rgba(187, 46, 46, 0.14);
+}
+
 .pill {
   background: var(--pill-bg);
   border-radius: 10px;
@@ -698,6 +704,174 @@ td {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+}
+
+.stats-grid-compact {
+  margin-bottom: 14px;
+}
+
+.request-subtitle {
+  margin: 0 0 10px;
+  color: var(--primary);
+}
+
+.request-health {
+  font-size: 0.95rem;
+}
+
+.react-dashboard-shell {
+  animation: riseIn 420ms ease both;
+}
+
+.react-dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr;
+  gap: 16px;
+}
+
+.react-dashboard-grid.admin {
+  grid-template-columns: 1.2fr 1fr 1fr;
+}
+
+.react-hero-card,
+.react-attendance-card,
+.react-panel-card {
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 20px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.32), rgba(255, 255, 255, 0.08)),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.react-hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.react-hero-card::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -30px;
+  width: 180px;
+  height: 180px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(24, 169, 153, 0.18), transparent 70%);
+}
+
+.react-kicker {
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.react-title {
+  margin: 10px 0 8px;
+  font-size: 2rem;
+  line-height: 1.08;
+  color: var(--text);
+}
+
+.react-copy {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.react-copy.small {
+  font-size: 0.92rem;
+}
+
+.react-metric-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.react-metric-card {
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.react-metric-label {
+  display: block;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.react-metric-value {
+  display: block;
+  margin-top: 8px;
+  font-size: 1.7rem;
+  color: var(--primary);
+}
+
+.react-attendance-card {
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.react-ring {
+  width: 150px;
+  height: 150px;
+  margin: 16px 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+}
+
+.react-ring-inner {
+  width: 112px;
+  height: 112px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--surface-strong);
+  border: 1px solid var(--border);
+  font-size: 1.3rem;
+  color: var(--primary);
+}
+
+.react-panel-card {
+  display: grid;
+  gap: 12px;
+}
+
+.react-panel-title {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--primary);
+}
+
+.react-list-item {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.react-list-head {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.react-list-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.react-empty {
+  color: var(--muted);
 }
 
 .stat-card {
@@ -950,7 +1124,10 @@ td {
   }
 
   .stats-grid,
-  .hero-grid {
+  .hero-grid,
+  .react-dashboard-grid,
+  .react-dashboard-grid.admin,
+  .react-metric-row {
     grid-template-columns: 1fr;
   }
 

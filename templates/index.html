@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Student Dashboard{% endblock %}
+{% block extra_head %}
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+{% endblock %}
 {% block body %}
   <div class="topbar">
     <div class="topbar-title">Welcome, {{ user.full_name }} ({{ user.department or "-" }} / Year {{ user.academic_year or "-" }} / {{ user.section or "-" }})</div>
@@ -11,6 +15,8 @@
 
   <div class="container">
     <div class="stack-lg">
+    <div id="student-dashboard-react" class="react-dashboard-shell"></div>
+    <script id="student-dashboard-data" type="application/json">{{ dashboard_ui_data|tojson }}</script>
     <div class="stats-grid">
       <div class="stat-card">
         <strong>{{ enrollments|length }}</strong>
@@ -21,9 +27,97 @@
         <span>Visible assignments</span>
       </div>
       <div class="stat-card">
-        <strong>{{ notices|length }}</strong>
-        <span>Latest updates</span>
+        <strong>{{ request_counts.pending if request_counts else 0 }}</strong>
+        <span>Pending requests</span>
       </div>
+    </div>
+
+    <div class="card">
+      <div class="section-head">
+        <div class="section-copy">
+          <h2 class="section-title">Student Requests</h2>
+          <p>Submit bonafide, leave, or certificate requests and track their status.</p>
+        </div>
+      </div>
+      {% if request_error %}
+        <div class="error">{{ request_error }}</div>
+      {% endif %}
+      {% if request_advice %}
+        <div class="info">{{ request_advice }}</div>
+      {% endif %}
+      <div class="grid-2">
+        <div class="card request-form-card">
+          <h3 class="request-subtitle">Create Request</h3>
+          <form method="post" action="/requests">
+            <label>Category</label>
+            <select name="category" required>
+              <option value="bonafide">Bonafide</option>
+              <option value="leave">Leave</option>
+              <option value="certificate">Certificate</option>
+            </select>
+            <label>Title</label>
+            <input type="text" name="title" placeholder="Semester leave request" required />
+            <label>Description</label>
+            <textarea name="description" rows="4" placeholder="Explain the request clearly..." required></textarea>
+            <label>Proof URL (optional)</label>
+            <input type="url" name="proof_url" placeholder="https://..." />
+            <button class="btn btn-primary btn-block" type="submit">Submit Request</button>
+          </form>
+        </div>
+        <div class="card request-summary-card">
+          <h3 class="request-subtitle">Request Summary</h3>
+          <div class="stats-grid stats-grid-compact">
+            <div class="stat-card">
+              <strong>{{ request_counts.pending if request_counts else 0 }}</strong>
+              <span>Pending</span>
+            </div>
+            <div class="stat-card">
+              <strong>{{ request_counts.approved if request_counts else 0 }}</strong>
+              <span>Approved</span>
+            </div>
+            <div class="stat-card">
+              <strong>{{ request_counts.rejected if request_counts else 0 }}</strong>
+              <span>Rejected</span>
+            </div>
+          </div>
+          <div class="pill request-health">
+            Attendance: <strong>{{ attendance_percentage }}%</strong>
+          </div>
+        </div>
+      </div>
+      {% if requests %}
+        <div class="table-wrap">
+          <table>
+            <tr><th>Category</th><th>Title</th><th>Status</th><th>Remark</th><th>Proof</th><th>Created</th></tr>
+            {% for item in requests %}
+              <tr>
+                <td>{{ item.category }}</td>
+                <td>{{ item.title }}</td>
+                <td>
+                  {% if item.status == "approved" %}
+                    <span class="tag tag-done">Approved</span>
+                  {% elif item.status == "rejected" %}
+                    <span class="tag tag-rejected">Rejected</span>
+                  {% else %}
+                    <span class="tag tag-pending">Pending</span>
+                  {% endif %}
+                </td>
+                <td>{{ item.admin_remark or "-" }}</td>
+                <td>
+                  {% if item.proof_url %}
+                    <a href="{{ item.proof_url }}" target="_blank">Open</a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+                <td>{{ item.created_at }}</td>
+              </tr>
+            {% endfor %}
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">No requests submitted yet. Start with bonafide, leave, or certificate requests.</div>
+      {% endif %}
     </div>
 
     <div class="card">
@@ -375,4 +469,7 @@
       }
     })();
   </script>
+{% endblock %}
+{% block extra_scripts %}
+  <script src="/static/js/student_dashboard_react.js"></script>
 {% endblock %}
