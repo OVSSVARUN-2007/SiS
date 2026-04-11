@@ -77,6 +77,23 @@ a:hover {
   z-index: 1;
 }
 
+.site-footer {
+  position: relative;
+  z-index: 1;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 16px 24px;
+}
+
+.site-footer p {
+  margin: 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .bg-orb,
 .bg-grid {
   pointer-events: none;
@@ -1173,6 +1190,10 @@ td {
 
   .site-header {
     padding: 12px 12px 0;
+  }
+
+  .site-footer {
+    padding: 0 12px 20px;
   }
 
   .site-nav {
