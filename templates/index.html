@@ -391,6 +391,31 @@
         return fragment;
       }
 
+      function renderInlineFormatting(text) {
+        const fragment = document.createDocumentFragment();
+        const strongRegex = /(\*\*[^*]+\*\*|__[^_]+__)/g;
+        const parts = text.split(strongRegex);
+
+        parts.forEach(function (part) {
+          if (!part) return;
+          const isStrong =
+            (part.startsWith("**") && part.endsWith("**") && part.length > 4) ||
+            (part.startsWith("__") && part.endsWith("__") && part.length > 4);
+
+          if (isStrong) {
+            const strong = document.createElement("strong");
+            strong.className = "ai-strong";
+            strong.appendChild(renderInlineCode(part.slice(2, -2)));
+            fragment.appendChild(strong);
+            return;
+          }
+
+          fragment.appendChild(renderInlineCode(part));
+        });
+
+        return fragment;
+      }
+
       let codeIndex = 0;
       for (const block of blocks) {
         if (!block.value) continue;
@@ -410,21 +435,31 @@
             const isListItem = /^([-*]|\d+\.)\s+/.test(trimmed);
             if (isListItem) {
               if (!listEl) {
-                listEl = document.createElement("ul");
+                listEl = /^\d+\.\s+/.test(trimmed) ? document.createElement("ol") : document.createElement("ul");
                 listEl.className = "ai-list";
                 wrapper.appendChild(listEl);
               }
               const item = document.createElement("li");
               item.className = "ai-list-item";
-              item.appendChild(renderInlineCode(trimmed.replace(/^([-*]|\d+\.)\s+/, "")));
+              item.appendChild(renderInlineFormatting(trimmed.replace(/^([-*]|\d+\.)\s+/, "")));
               listEl.appendChild(item);
+              continue;
+            }
+
+            const headingMatch = trimmed.match(/^(?:#{1,6}\s+|\*\*)(.+?)(?:\*\*)?:?$/);
+            if (headingMatch && (trimmed.startsWith("#") || (/^\*\*.+\*\*:?$/.test(trimmed) && !/[.!?]$/.test(trimmed)))) {
+              listEl = null;
+              const heading = document.createElement("h4");
+              heading.className = "ai-section-heading";
+              heading.appendChild(renderInlineFormatting(headingMatch[1].trim()));
+              wrapper.appendChild(heading);
               continue;
             }
 
             listEl = null;
             const p = document.createElement("p");
             p.className = "ai-paragraph";
-            p.appendChild(renderInlineCode(trimmed));
+            p.appendChild(renderInlineFormatting(trimmed));
             wrapper.appendChild(p);
           }
 

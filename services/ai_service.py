@@ -18,6 +18,14 @@ FALLBACK_MODELS = [
 ]
 
 headers = {"Authorization": f"Bearer {HF_API_KEY}"} if HF_API_KEY else {}
+SYSTEM_PROMPT = (
+    "You are a helpful study assistant for college students. "
+    "Give complete answers without cutting off mid-sentence. "
+    "Format the reply cleanly using short markdown section headings, bold key terms, "
+    "bullet points when helpful, and fenced code blocks for code."
+)
+MAX_COMPLETION_TOKENS = 900
+MAX_CONTINUATIONS = 2
 
 
 def _stringify_error(error_value) -> str:
@@ -73,14 +81,14 @@ def _parse_inference_response(data):
     return data.get("error", str(data)) if isinstance(data, dict) else str(data)
 
 
-def _ask_chat_route(question: str, model_id: str):
+def _ask_chat_route(messages, model_id: str):
     response = requests.post(
         CHAT_API_URL,
         headers={**headers, "Content-Type": "application/json"},
         json={
             "model": model_id,
-            "messages": [{"role": "user", "content": question}],
-            "max_tokens": 300,
+            "messages": messages,
+            "max_tokens": MAX_COMPLETION_TOKENS,
             "temperature": 0.7,
         },
         timeout=30,
@@ -96,11 +104,15 @@ def _ask_chat_route(question: str, model_id: str):
 
     choices = data.get("choices", []) if isinstance(data, dict) else []
     if choices:
-        msg = choices[0].get("message", {})
+        choice = choices[0]
+        msg = choice.get("message", {})
         content = msg.get("content")
         if content:
-            return content, None
-    return str(data), None
+            return {
+                "content": content,
+                "finish_reason": choice.get("finish_reason"),
+            }, None
+    return {"content": str(data), "finish_reason": None}, None
 
 
 def ask_ai(question: str):
@@ -113,9 +125,37 @@ def ask_ai(question: str):
     models_to_try = [MODEL_ID] + [m for m in FALLBACK_MODELS if m != MODEL_ID]
     last_error = "Unknown AI service error."
     for model_id in models_to_try:
-        output, error = _ask_chat_route(question, model_id)
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": question},
+        ]
+        output, error = _ask_chat_route(messages, model_id)
         if output:
-            return output
+            answer_parts = [output["content"].strip()]
+            finish_reason = output.get("finish_reason")
+
+            for _ in range(MAX_CONTINUATIONS):
+                if finish_reason not in {"length", "max_tokens"}:
+                    break
+                messages.extend(
+                    [
+                        {"role": "assistant", "content": "\n\n".join(part for part in answer_parts if part)},
+                        {
+                            "role": "user",
+                            "content": (
+                                "Continue from exactly where you stopped. "
+                                "Do not repeat earlier content. Finish the remaining answer."
+                            ),
+                        },
+                    ]
+                )
+                continuation, continuation_error = _ask_chat_route(messages, model_id)
+                if continuation_error or not continuation:
+                    break
+                answer_parts.append(continuation["content"].strip())
+                finish_reason = continuation.get("finish_reason")
+
+            return "\n\n".join(part for part in answer_parts if part)
         if error:
             last_error = error
             if "token is invalid or expired" in error.lower():
