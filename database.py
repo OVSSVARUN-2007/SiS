@@ -73,7 +73,10 @@ Base = declarative_base()
 
 
 def get_db():
-    ensure_database_ready()
+    try:
+        ensure_database_ready()
+    except Exception as e:
+        print("DB ERROR:", e)
     db = SessionLocal()
     try:
         yield db
