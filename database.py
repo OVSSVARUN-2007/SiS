@@ -1,7 +1,8 @@
 import logging
 import shutil
 from pathlib import Path
-
+import pymysql
+pymysql.install_as_MySQLdb()
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.exc import OperationalError
