@@ -2,7 +2,7 @@ fastapi
 uvicorn
 jinja2
 sqlalchemy
-pymysql
+pymysql==1.1.0
 cryptography
 python-dotenv
 python-multipart
